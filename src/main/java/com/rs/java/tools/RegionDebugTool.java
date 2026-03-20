@@ -11,12 +11,12 @@ public class RegionDebugTool {
 
     private static final String CACHE_PATH = "data/cache/"; // change to compare
 
-    private static final int REGION_ID = 12598;
+    private static final int REGION_ID = 10329;
 
-    private static final int[] KEYS = {504856351,
-            446930567,
-            -1265381907,
-            -565095951};
+    private static final int[] KEYS = {6023912,
+            -1398996940,
+            -1850857481,
+            -1428087612};
 
     public static void main(String[] args) throws Exception {
 

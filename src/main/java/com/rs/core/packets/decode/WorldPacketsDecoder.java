@@ -1746,6 +1746,16 @@ public final class WorldPacketsDecoder extends Decoder {
         }
 
 
+        // Custom shop (interface 3055) - Buy X
+        if (player.temporaryAttribute().get("CustomShopSlot") != null
+                && player.getInterfaceManager().containsInterface(CustomShop.INTERFACE_ID)) {
+            Integer slot = (Integer) player.temporaryAttribute().remove("CustomShopSlot");
+            CustomShop customShop = (CustomShop) player.temporaryAttribute().get("CustomShop");
+            if (customShop != null && slot != null && value > 0)
+                customShop.buy(player, slot, value);
+            return;
+        }
+
         // Dungeoneering smithing (934)
         if (player.getInterfaceManager().containsInterface(934)
                 && player.getTemporaryAttributtes().get("FORGE_X") != null) {

@@ -10,7 +10,7 @@ import com.rs.java.game.player.CombatDefinitions;
 import com.rs.java.game.player.Player;
 import com.rs.java.game.player.Skills;
 import com.rs.java.game.player.content.ItemConstants;
-import com.rs.java.game.player.content.Shop;
+import com.rs.java.game.player.content.ShopCurrency;
 import com.rs.core.packets.decode.WorldPacketsDecoder;
 import com.rs.java.utils.ItemExamines;
 import com.rs.java.utils.Utils;
@@ -584,7 +584,7 @@ public class GrandExchangeManager implements Serializable {
 	}
 
 	public void setItem(Item item, boolean sell) {
-		if (item.getId() == Shop.COINS || !ItemConstants.isTradeable(item)) {
+		if (item.getId() == ShopCurrency.COINS.id() || !ItemConstants.isTradeable(item)) {
 			player.getPackets().sendGameMessage("This item cannot be sold on the Grand Exchange.");
 			return;
 		}

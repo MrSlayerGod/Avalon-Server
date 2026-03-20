@@ -3,12 +3,8 @@
   "variants": [
     {
       "ids": [
-        5924,
-        7880,
-        7881,
-        7882,
-        7883,
-        7884
+        5,
+        5924
       ],
       "members": false,
       "combatLevel": 2,

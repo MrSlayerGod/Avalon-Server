@@ -57,6 +57,7 @@ import com.rs.core.tasks.WorldTasksManager;
 import com.rs.core.packets.InputStream;
 import com.rs.core.packets.decode.WorldPacketsDecoder;
 import com.rs.java.utils.ItemExamines;
+import com.rs.java.game.player.content.CustomShop;
 import com.rs.java.utils.ShopsHandler;
 import com.rs.java.utils.Utils;
 import com.rs.kotlin.game.player.combat.Weapon;
@@ -2193,6 +2194,25 @@ public class ButtonHandler {
             } else if (componentId == 28) {
                 player.getTemporaryAttributtes().put("shop_buying", true);
 
+            }
+        } else if (interfaceId == CustomShop.INTERFACE_ID) {
+            CustomShop customShop = (CustomShop) player.temporaryAttribute().get("CustomShop");
+            if (customShop == null) return;
+            if (componentId >= 4 && componentId <= 14) {
+                // Tab buttons — CS2 5398 takes (componentId - 3) to highlight the clicked tab
+                int tabIndex = componentId - 3;
+                player.getPackets().sendRunScript(5398, tabIndex);
+                customShop.onTabClicked(player, tabIndex);
+            } else if (componentId == 19) {
+                if (packetId == WorldPacketsDecoder.ACTION_BUTTON1_PACKET) customShop.sendInfo(player, slotId);
+                else if (packetId == WorldPacketsDecoder.ACTION_BUTTON2_PACKET) customShop.buy(player, slotId, 1);
+                else if (packetId == WorldPacketsDecoder.ACTION_BUTTON3_PACKET) customShop.buy(player, slotId, 5);
+                else if (packetId == WorldPacketsDecoder.ACTION_BUTTON4_PACKET) customShop.buy(player, slotId, 10);
+                else if (packetId == WorldPacketsDecoder.ACTION_BUTTON5_PACKET) customShop.buy(player, slotId, 50);
+                else if (packetId == WorldPacketsDecoder.ACTION_BUTTON6_PACKET) {
+                    player.temporaryAttribute().put("CustomShopSlot", slotId);
+                    player.getPackets().sendInputIntegerScript(true, "Enter amount to buy:");
+                }
             }
         } else if (interfaceId == 1266) {
             if (player.getInterfaceManager().containsInterface(3010)) {

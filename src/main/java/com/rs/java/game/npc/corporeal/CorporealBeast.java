@@ -40,7 +40,7 @@ public class CorporealBeast extends NPC {
 		if (hit.getSource() instanceof Player) {
 		Player target = (Player) hit.getSource();
 		if (!ItemDefinitions.getItemDefinitions(target.getEquipment().getWeaponId()).getName().toLowerCase()
-				.contains(" spear")) {
+				.contains("spear")) {
 			hit.setDamage(hit.getDamage() / 2);
 			target.getPackets().sendGameMessage("You cannot deal full damage without a spear weapon.");
 		}

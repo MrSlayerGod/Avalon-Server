@@ -3,26 +3,17 @@
     "npcId": 152,
     "npcName": "null",
     "reason": "No Infobox Monster found",
-    "firstSeen": "2026-03-17T14:47:50.124242Z",
-    "lastSeen": "2026-03-17T14:47:50.124242Z",
+    "firstSeen": "2026-03-20T12:20:11.235530300Z",
+    "lastSeen": "2026-03-20T12:20:11.235530300Z",
     "attempts": 1,
     "expectedCombatLevel": 85
-  },
-  "944": {
-    "npcId": 944,
-    "npcName": "Combat instructor",
-    "reason": "No Infobox Monster found",
-    "firstSeen": "2026-03-17T14:49:09.790704300Z",
-    "lastSeen": "2026-03-17T14:49:09.790704300Z",
-    "attempts": 1,
-    "expectedCombatLevel": 146
   },
   "3090": {
     "npcId": 3090,
     "npcName": "Haakon the Champion",
     "reason": "No Infobox Monster found",
-    "firstSeen": "2026-03-17T14:47:43.209057500Z",
-    "lastSeen": "2026-03-17T14:47:43.209057500Z",
+    "firstSeen": "2026-03-20T10:06:12.525328600Z",
+    "lastSeen": "2026-03-20T10:06:12.525328600Z",
     "attempts": 1,
     "expectedCombatLevel": 29
   },
@@ -30,27 +21,27 @@
     "npcId": 3705,
     "npcName": "Max",
     "reason": "No Infobox Monster found",
-    "firstSeen": "2026-03-17T14:47:42.344354600Z",
-    "lastSeen": "2026-03-17T14:47:42.344354600Z",
+    "firstSeen": "2026-03-20T10:11:29.263776700Z",
+    "lastSeen": "2026-03-20T10:11:29.263776700Z",
     "attempts": 1,
     "expectedCombatLevel": 138
+  },
+  "6521": {
+    "npcId": 6521,
+    "npcName": "Grand Exchange Tutor",
+    "reason": "\u0027wikitext\u0027 not found in JSON",
+    "firstSeen": "2026-03-20T18:17:19.995194600Z",
+    "lastSeen": "2026-03-20T18:17:19.995194600Z",
+    "attempts": 1,
+    "expectedCombatLevel": 0
   },
   "7158": {
     "npcId": 7158,
     "npcName": "Cockroach drone",
     "reason": "\u0027wikitext\u0027 not found in JSON",
-    "firstSeen": "2026-03-17T14:47:39.494700900Z",
-    "lastSeen": "2026-03-17T14:47:39.494700900Z",
+    "firstSeen": "2026-03-20T10:06:12.422924500Z",
+    "lastSeen": "2026-03-20T10:06:12.422924500Z",
     "attempts": 1,
     "expectedCombatLevel": 8
-  },
-  "7891": {
-    "npcId": 7891,
-    "npcName": "Dummy",
-    "reason": "No Infobox Monster found",
-    "firstSeen": "2026-03-19T23:25:34.777879200Z",
-    "lastSeen": "2026-03-19T23:25:34.777879200Z",
-    "attempts": 1,
-    "expectedCombatLevel": 0
   }
 }

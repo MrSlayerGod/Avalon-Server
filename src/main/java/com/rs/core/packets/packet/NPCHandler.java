@@ -49,6 +49,7 @@ import com.rs.java.game.player.content.ItemSets;
 import com.rs.java.game.player.content.PlayerLook;
 import com.rs.java.game.player.content.customtab.TeleportTab;
 import com.rs.java.game.player.content.dungeoneering.rooms.puzzles.SlidingTilesRoom;
+import com.rs.java.game.player.content.shops.CustomShopHandler;
 import com.rs.java.game.player.controllers.Falconry;
 import com.rs.java.game.player.dialogues.Dialogue;
 import com.rs.java.game.player.dialogues.npcs.FremennikShipmaster;
@@ -536,6 +537,10 @@ public class NPCHandler {
                 ShopsHandler.openShop(player, 7);
             else if (npc.getId() == 15513 || npc.getId() >= 11303 && npc.getId() <= 11307)
                 player.getDialogueManager().startDialogue("ServantDialogue", npc.getId());
+            else if (npc.getId() == 350) {
+                player.getPackets().sendGameMessage("debug: opening custom shop");
+                CustomShopHandler.open(player, CustomShopHandler.DONATOR_SHOP);
+            }
             else if (npc.getId() == 548)
                 ShopsHandler.openShop(player, 8);
             else if (npc.getId() == 549)

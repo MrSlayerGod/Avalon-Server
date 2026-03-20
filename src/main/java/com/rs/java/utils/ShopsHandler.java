@@ -1,120 +1,68 @@
 package com.rs.java.utils;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
 import java.util.HashMap;
 
+import com.google.gson.Gson;
 import com.rs.java.game.item.Item;
 import com.rs.java.game.player.Player;
+import com.rs.java.game.player.content.JsonShop;
 import com.rs.java.game.player.content.Shop;
 
 public class ShopsHandler {
 
-	private static final HashMap<Integer, Shop> handledShops = new HashMap<Integer, Shop>();
+	private static final HashMap<Integer, Shop> handledShops = new HashMap<>();
 
-	private static final String PACKED_PATH = System.getProperty("user.dir") + "/data/items/packedShops/";
-	private static final String UNPACKED_PATH = System.getProperty("user.dir") + "/data/items/unpackedShops.txt";
-
-	private static BufferedReader in;
+	private static final String JSON_SHOPS_PATH = "data/shops/";
 
 	public static void init() {
-		if (new File(PACKED_PATH).exists())
-			loadPackedShops();
-		else
-			loadUnpackedShops();
-	}
-
-	private static void loadUnpackedShops() {
-		Logger.log("ShopsHandler", "Packing shops...");
-		try {
-			in = new BufferedReader(new FileReader(UNPACKED_PATH));
-			DataOutputStream out = new DataOutputStream(new FileOutputStream(PACKED_PATH));
-			while (true) {
-				String line = in.readLine();
-				if (line == null)
-					break;
-				if (line.startsWith("//"))
+		File dir = new File(JSON_SHOPS_PATH);
+		if (!dir.exists() || !dir.isDirectory()) {
+			Logger.log("ShopsHandler", "Shop directory not found: " + JSON_SHOPS_PATH);
+			return;
+		}
+		File[] files = dir.listFiles(f -> f.getName().endsWith(".json"));
+		if (files == null)
+			return;
+		Gson gson = new Gson();
+		int count = 0;
+		for (File file : files) {
+			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+				JsonShop def = gson.fromJson(reader, JsonShop.class);
+				if (def == null || def.getShopName() == null)
 					continue;
-				String[] splitedLine = line.split(" - ", 3);
-				if (splitedLine.length != 3)
-					throw new RuntimeException("Invalid list for shop line: " + line);
-				String[] splitedInform = splitedLine[0].split(" ", 3);
-				if (splitedInform.length != 3)
-					throw new RuntimeException("Invalid list for shop line: " + line);
-				String[] splitedItems = splitedLine[2].split(" ");
-				int key = Integer.valueOf(splitedInform[0]);
-				int money = Integer.valueOf(splitedInform[1]);
-				boolean generalStore = Boolean.valueOf(splitedInform[2]);
-				Item[] items = new Item[splitedItems.length / 2];
-				int count = 0;
-				for (int i = 0; i < items.length; i++)
-					items[i] = new Item(Integer.valueOf(splitedItems[count++]), Integer.valueOf(splitedItems[count++]));
-				out.writeInt(key);
-				writeAlexString(out, splitedLine[1]);
-				out.writeShort(money);
-				out.writeBoolean(generalStore);
-				out.writeByte(items.length);
-				for (Item item : items) {
-					out.writeShort(item.getId());
-					out.writeInt(item.getAmount());
+				int size = def.getItems().size();
+				Item[]    items              = new Item[size];
+				int[]     buyPrices          = new int[size];
+				int[]     sellPrices         = new int[size];
+				int[]     restockTimers      = new int[size];
+				boolean[] ironmanRestricted  = new boolean[size];
+				for (int i = 0; i < size; i++) {
+					JsonShop.Item ji     = def.getItems().get(i);
+					items[i]             = new Item(ji.id, ji.amount);
+					buyPrices[i]         = ji.buyPrice;
+					sellPrices[i]        = ji.sellPrice;
+					restockTimers[i]     = ji.restockTimer;
+					ironmanRestricted[i] = ji.ironmanRestricted;
 				}
-				addShop(key, new Shop(splitedLine[1], money, items, generalStore));
+				addShop(def.getShopUID(), new Shop(
+						def.getShopName(), def.getCurrency(), items, def.getSellPolicy(),
+						buyPrices, sellPrices, restockTimers, ironmanRestricted));
+				count++;
+			} catch (Exception e) {
+				Logger.log("ShopsHandler", "Failed to load shop from " + file.getName() + ": " + e.getMessage());
 			}
-			in.close();
-			out.close();
-		} catch (Throwable e) {
-			Logger.handle(e);
 		}
-	}
-
-	private static void loadPackedShops() {
-		try {
-			RandomAccessFile in = new RandomAccessFile(PACKED_PATH, "r");
-			FileChannel channel = in.getChannel();
-			ByteBuffer buffer = channel.map(MapMode.READ_ONLY, 0, channel.size());
-			while (buffer.hasRemaining()) {
-				int key = buffer.getInt();
-				String name = readAlexString(buffer);
-				int money = buffer.getShort() & 0xffff;
-				boolean generalStore = buffer.get() == 1;
-				Item[] items = new Item[buffer.get() & 0xff];
-				for (int i = 0; i < items.length; i++)
-					items[i] = new Item(buffer.getShort() & 0xffff, buffer.getInt());
-				addShop(key, new Shop(name, money, items, generalStore));
-			}
-			channel.close();
-			in.close();
-		} catch (Throwable e) {
-			Logger.handle(e);
-		}
-	}
-
-	public static String readAlexString(ByteBuffer buffer) {
-		int count = buffer.get() & 0xfff;
-		byte[] bytes = new byte[count];
-		buffer.get(bytes, 0, count);
-		return new String(bytes);
-	}
-
-	public static void writeAlexString(DataOutputStream out, String string) throws IOException {
-		byte[] bytes = string.getBytes();
-		out.writeByte(bytes.length);
-		out.write(bytes);
+		Logger.log("ShopsHandler", "Loaded " + count + " shops from " + JSON_SHOPS_PATH);
 	}
 
 	public static void restoreShops() {
 		for (Shop shop : handledShops.values())
 			shop.restoreItems();
 	}
-	
+
 	public static void degradeShops() {
 		for (Shop shop : handledShops.values())
 			shop.degradeItems();

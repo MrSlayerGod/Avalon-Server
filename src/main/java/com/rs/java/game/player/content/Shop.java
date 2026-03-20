@@ -26,34 +26,58 @@ public class Shop {
 	private static int MAIN_STOCK_ITEMS_KEY = 3;
 
 	private static final int MAX_SHOP_ITEMS = 40;
-	public static final int RUSTY_COINS = 18201;
-	public static final int COINS = 995;
 
 	private String name;
 	private Item[] mainStock;
 	private int[] defaultQuantity;
+	private int[] explicitBuyPrices;
+	private int[] explicitSellPrices;
 	private Item[] generalStock;
-	private int money;
+	private ShopCurrency currency;
 	private int amount;
 	private int shopId;
-
-	// private CopyOnWriteArrayList<Player> viewingPlayers;
+	private ShopPolicy sellPolicy;
+	/** Ticks required between each +1 restock per item slot (0 = restore every tick). */
+	private int[] restockTimers;
+	/** Tracks elapsed ticks since last restock for each item slot. */
+	private int[] restockCounters;
+	/** When true for a slot, ironman accounts cannot purchase that item. */
+	private boolean[] ironmanRestricted;
 
 	private transient final Map<Integer, List<Player>> viewingPlayers = new HashMap<>();
 
+	/** Legacy constructor used by the packed/unpacked loaders. */
 	public Shop(String name, int money, Item[] mainStock, boolean isGeneralStore) {
+		this(name, ShopCurrency.fromItemId(money), mainStock,
+				isGeneralStore ? ShopPolicy.CAN_SELL : ShopPolicy.STOCK_ONLY,
+				null, null, null, null);
+	}
+
+	/** Full constructor used by the JSON loader. */
+	public Shop(String name, ShopCurrency currency, Item[] mainStock, ShopPolicy sellPolicy,
+				int[] buyPrices, int[] sellPrices, int[] restockTimers, boolean[] ironmanRestricted) {
 		this.name = name;
-		this.money = money;
+		this.currency = currency;
 		this.mainStock = mainStock;
+		this.sellPolicy = sellPolicy;
+		this.explicitBuyPrices = buyPrices;
+		this.explicitSellPrices = sellPrices;
+		this.restockTimers = restockTimers != null ? restockTimers : new int[mainStock.length];
+		this.restockCounters = new int[mainStock.length];
+		this.ironmanRestricted = ironmanRestricted != null ? ironmanRestricted : new boolean[mainStock.length];
 		defaultQuantity = new int[mainStock.length];
 		for (int i = 0; i < defaultQuantity.length; i++)
 			defaultQuantity[i] = mainStock[i].getAmount();
-		if (isGeneralStore && mainStock.length < MAX_SHOP_ITEMS)
+		if (sellPolicy == ShopPolicy.CAN_SELL && mainStock.length < MAX_SHOP_ITEMS)
 			generalStock = new Item[MAX_SHOP_ITEMS - mainStock.length];
 	}
 
 	public boolean isGeneralStore() {
-		return generalStock != null;
+		return sellPolicy == ShopPolicy.CAN_SELL;
+	}
+
+	public ShopPolicy getSellPolicy() {
+		return sellPolicy;
 	}
 
 	public void addPlayer(final Player player, int shopId) {
@@ -74,7 +98,7 @@ public class Shop {
 		});
 		player.getPackets().sendVar(118, MAIN_STOCK_ITEMS_KEY);
 		player.getPackets().sendVar(1496, 51);
-		player.getPackets().sendVar(532, money);
+		player.getPackets().sendVar(532, currency.isPhysical() ? currency.id() : -1);
 		player.getPackets().sendVar(2565, 0);
 		player.getPackets().sendVar(2563, 0);
 		sendStore(player);
@@ -118,24 +142,24 @@ public class Shop {
 			player.getPackets().sendGameMessage("You must choose a quantity first.");
 			return;
 		}
-		int price = getBuyPrice(item);
-		int inventoryMoney = player.getInventory().getNumberOf(995);
-		int moneyPouch = player.getMoneyPouch().getTotal();
-		int totalMoney = inventoryMoney + moneyPouch;
-		int totalCost = 0;
-		int buyMethod = -1;
-		int leftOver = 0;
-		int totalBought = 0;
-		boolean cantBuyAll = false;
-		boolean outOfStock = false;
-		boolean noSpace = false;
-		if (quantity > item.getAmount()) {
-			quantity = item.getAmount();
+		if (ironmanRestricted != null && clickSlot < ironmanRestricted.length && ironmanRestricted[clickSlot]) {
+			// TODO: replace with player.isIronman() once the ironman system is added
+			// player.getPackets().sendGameMessage("Ironman accounts cannot buy this item.");
+			// return;
 		}
 		if (item.getAmount() == 0) {
 			player.getPackets().sendGameMessage(item.getName() + " is out of stock.");
 			return;
 		}
+		int price       = getBuyPrice(item);
+		int totalHeld   = currency.getAmount(player);
+		int totalCost   = 0;
+		int totalBought = 0;
+		boolean cantBuyAll = false;
+		boolean outOfStock = false;
+		boolean noSpace    = false;
+		if (quantity > item.getAmount())
+			quantity = item.getAmount();
 		for (int i = 0; i < quantity; i++) {
 			if (!player.getInventory().hasFreeSlots() && !item.getDefinitions().isStackable()
 					&& player.getInventory().containsOneItem(item.getId())) {
@@ -146,24 +170,8 @@ public class Shop {
 				outOfStock = true;
 				continue;
 			}
-			if ((totalCost > 0 ? moneyPouch - totalCost : moneyPouch) >= price) {
+			if (totalHeld - totalCost >= price) {
 				totalCost += price;
-				buyMethod = 0;
-				totalBought++;
-				item.setAmount(item.getAmount() - 1);
-				if (item.getAmount() <= 0 && clickSlot >= mainStock.length)
-					generalStock[clickSlot - mainStock.length] = null;
-			} else if ((totalCost > 0 ? inventoryMoney - totalCost : inventoryMoney) >= price) {
-				totalCost += price;
-				buyMethod = 1;//inventory only
-				totalBought++;
-				item.setAmount(item.getAmount() - 1);
-				if (item.getAmount() <= 0 && clickSlot >= mainStock.length)
-					generalStock[clickSlot - mainStock.length] = null;
-			} else if ((totalCost > 0 ? totalMoney - totalCost : totalMoney) >= price) {
-				totalCost += price;
-				leftOver = totalCost - moneyPouch;
-				buyMethod = 2;//inventory && money pouch combined
 				totalBought++;
 				item.setAmount(item.getAmount() - 1);
 				if (item.getAmount() <= 0 && clickSlot >= mainStock.length)
@@ -172,36 +180,32 @@ public class Shop {
 				cantBuyAll = true;
 			}
 		}
-		if (buyMethod == 0) {
-			player.getPackets().sendRunScript(5561, 0, totalCost);
-			player.getMoneyPouch().takeMoneyFromPouch(totalCost);
-		} else if (buyMethod == 1) {
-			player.getInventory().deleteItem(995, totalCost);
-		} else if (buyMethod == 2) {
-			player.getPackets().sendRunScript(5561, 0, moneyPouch);
-			player.getMoneyPouch().takeMoneyFromPouch(moneyPouch);
-			player.getInventory().deleteItem(995, leftOver);
-		}
-		if (outOfStock) {
+		if (totalBought > 0)
+			currency.remove(player, totalCost);
+		if (outOfStock)
 			player.getPackets().sendGameMessage(item.getName() + " is out of stock.");
-		}
 		refreshShop();
 		sendInventory(player);
 		player.getInventory().addItem(item.getId(), totalBought);
-		if (cantBuyAll) {
-			player.getPackets().sendGameMessage("You don't have enough coins to buy " + item.getName() + ".");
-		}
-		if (noSpace) {
+		if (cantBuyAll)
+			player.getPackets().sendGameMessage("You don't have enough " + currency + " to buy " + item.getName() + ".");
+		if (noSpace)
 			player.getPackets().sendGameMessage("You don't have enough inventory space.");
-		}
 	}
 
 	public void restoreItems() {
 		boolean needRefresh = false;
 		for (int i = 0; i < mainStock.length; i++) {
 			if (mainStock[i].getAmount() < defaultQuantity[i]) {
-				mainStock[i].setAmount(mainStock[i].getAmount() + 1);
-				needRefresh = true;
+				int timer = (restockTimers != null && restockTimers[i] > 0) ? restockTimers[i] : 1;
+				restockCounters[i]++;
+				if (restockCounters[i] >= timer) {
+					restockCounters[i] = 0;
+					mainStock[i].setAmount(mainStock[i].getAmount() + 1);
+					needRefresh = true;
+				}
+			} else {
+				restockCounters[i] = 0;
 			}
 		}
 		if (needRefresh)
@@ -265,6 +269,10 @@ public class Shop {
 	}
 
 	public void sell(Player player, int slotId, int quantity) {
+		if (sellPolicy == ShopPolicy.NO_SELLING) {
+			player.getPackets().sendGameMessage("You cannot sell items to this shop.");
+			return;
+		}
 		if (player.getInventory().getItemsContainerSize() < slotId)
 			return;
 		Item item = player.getInventory().getItem(slotId);
@@ -278,7 +286,7 @@ public class Shop {
 		if (item.getDefinitions().isNoted())
 			item = new Item(item.getDefinitions().getCertId(), item.getAmount());
 		if (!ItemConstants.isTradeable(item) || item.getDefinitions().isDestroyItem() || name.equalsIgnoreCase("(deg)")
-				|| item.getId() == money) {
+				|| item.getId() == currency.id()) {
 			player.getPackets().sendGameMessage("You can't sell this item.");
 			return;
 		}
@@ -299,13 +307,28 @@ public class Shop {
 			return;
 		}
 		int price = getSellPrice(item);
+		if (price > 0) {
+			int canReceive = currency.getMaximumAmount() - currency.getAmount(player);
+			int maxSellable = canReceive / price;
+			if (quantity > maxSellable) {
+				if (maxSellable <= 0) {
+					player.getPackets().sendGameMessage("You cannot carry any more " + currency + ".");
+					return;
+				}
+				quantity = maxSellable;
+			}
+		}
 		player.getInventory().deleteItem(originalId, quantity);
 		if (price > 0)
-			player.getMoneyPouch().addMoney(price * quantity, false);
+			currency.add(player, price * quantity);
 		refreshShop();
 	}
 
 	public void sendValue(Player player, int slotId) {
+		if (sellPolicy == ShopPolicy.NO_SELLING) {
+			player.getPackets().sendGameMessage("You cannot sell items to this shop.");
+			return;
+		}
 		if (player.getInventory().getItemsContainerSize() < slotId)
 			return;
 		Item item = player.getInventory().getItem(slotId);
@@ -315,7 +338,7 @@ public class Shop {
 		if (item.getDefinitions().isNoted())
 			item = new Item(item.getDefinitions().getCertId(), item.getAmount());
 		if (!ItemConstants.isTradeable(item) || item.getDefinitions().isDestroyItem() || name.equalsIgnoreCase("(deg)")
-				|| item.getId() == money) {
+				|| item.getId() == currency.id()) {
 			player.getPackets().sendGameMessage("You can't sell this item.");
 			return;
 		}
@@ -331,7 +354,7 @@ public class Shop {
 		int price = getSellPrice(item);
 		player.getPackets().sendGameMessage(
 				item.getDefinitions().getName() + ": shop will buy for: " + Utils.getFormattedNumber(price, ',') + " "
-						+ ItemDefinitions.getItemDefinitions(money).getName().toLowerCase()
+						+ ItemDefinitions.getItemDefinitions(currency.id()).getName().toLowerCase()
 						+ ". Right-click the item to sell.");
 	}
 
@@ -372,7 +395,7 @@ public class Shop {
 			player.getPackets().sendGameMessage(item.getDefinitions().getName() + ": shop will "
 					+ (isBuying ? "sell" : "buy") + " for "
 					+ (isBuying ? Utils.getFormattedNumber(price, ',') : Utils.getFormattedNumber(sellPrice, ',')) + " "
-					+ ItemDefinitions.getItemDefinitions(money).getName().toLowerCase() + ".");
+					+ ItemDefinitions.getItemDefinitions(currency.id()).getName().toLowerCase() + ".");
 	}
 
 	public String getEquipType(Item item) {
@@ -469,6 +492,9 @@ public class Shop {
 	}
 
 	public int getBuyPrice(Item item) {
+		int slot = getMainStockSlot(item.getId());
+		if (slot != -1 && explicitBuyPrices != null && explicitBuyPrices[slot] > 0)
+			return explicitBuyPrices[slot];
 		ItemDefinitions unNoted = ItemDefinitions.getItemDefinitions(item.getId());
 		ItemDefinitions Noted = ItemDefinitions.getItemDefinitions(unNoted.getCertId());
 		try {
@@ -483,6 +509,13 @@ public class Shop {
 			e.printStackTrace();
 		}
 		return item.getDefinitions().getPrice();
+	}
+
+	private int getMainStockSlot(int itemId) {
+		for (int i = 0; i < mainStock.length; i++)
+			if (mainStock[i] != null && mainStock[i].getId() == itemId)
+				return i;
+		return -1;
 	}
 
 	public int getBuyPrice(Item item, int dq) {
@@ -504,15 +537,9 @@ public class Shop {
 	}
 
 	public int getSellPrice(Item item) {
-		@SuppressWarnings("unused")
-		boolean storeHasItem = false;
-		for (Item stock : mainStock) {
-			if (stock == null)
-				continue;
-			if (stock.getId() == item.getId()) {
-				storeHasItem = true;
-			}
-		}
+		int slot = getMainStockSlot(item.getId());
+		if (slot != -1 && explicitSellPrices != null && explicitSellPrices[slot] > 0)
+			return explicitSellPrices[slot];
 		switch (item.getId()) {
 		}
 		int price = item.getDefinitions().getLowAlchPrice();

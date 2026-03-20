@@ -82,7 +82,7 @@
   {
     "comment": "Banker",
     "npcId": 2718,
-    "dir": "NORTH",
+    "dir": "WEST",
     "tile": {
       "x": 3149,
       "y": 3506,

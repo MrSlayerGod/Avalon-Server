@@ -12,9 +12,9 @@ public class IndexReplacer {
     public static void main(String[] args) throws IOException {
         // Source and destination cache folders
         String destPath = "data/cache/";     // your main cache
-        String sourcePath = "data/onyxcache/cache/"; // donor cache
+        String sourcePath = "C:\\Users\\deane\\Desktop\\727 cache 400 added regions\\cache\\"; // donor cache
 
-        int indexId = 9; // the index you want to replace (textures = 9)
+        int indexId = 5; // the index you want to replace (textures = 9)
 
         CacheLibrary destCache = new CacheLibrary(destPath, false, null);
         CacheLibrary sourceCache = new CacheLibrary(sourcePath, false, null);

@@ -32,7 +32,7 @@ class WorldCorporealBeast(
             val target = hit.source as Player
             if (!ItemDefinitions.getItemDefinitions(target.getEquipment().weaponId).getName()
                     .lowercase(Locale.getDefault())
-                    .contains(" spear")
+                    .contains("spear")
             ) {
                 hit.damage /= 2
                 target.packets.sendGameMessage("You cannot deal full damage without a spear weapon.")

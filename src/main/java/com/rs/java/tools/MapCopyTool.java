@@ -10,8 +10,8 @@ public class MapCopyTool {
 
     private static final int MAPS_INDEX = 5;
 
-    private static final String SOURCE_CACHE = "data/634/cache/";
-    private static final String DEST_CACHE   = "data/742/";
+    private static final String SOURCE_CACHE = "data/cache/";
+    private static final String DEST_CACHE   = "C:\\Users\\deane\\Pictures\\cache\\";
 
     private static final int REGION_ID = 12598;
 
@@ -26,10 +26,11 @@ public class MapCopyTool {
         String landName = "l" + regionX + "_" + regionY;
 
         int[] keys = new int[] {//ge xteas from 634
-                6023912,
-                -1398996940,
-                -1850857481,
-                -1428087612
+                1251254967,
+                -652948165,
+                1911744550,
+                -595699947
+
         };
 
         System.out.println("Copying region: " + regionX + "," + regionY);

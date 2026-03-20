@@ -15,8 +15,8 @@ public class MapReplacer {
 	// 4134 login screen
 
 	public static void main(String[] args) throws ClassNotFoundException, IOException {
-		CacheLibrary cache718 = new CacheLibrary("data/cache/", false, null);
-		CacheLibrary cache667 = new CacheLibrary("data/cache639/", false, null);
+		CacheLibrary cache718 = new CacheLibrary("data/cache/", true, null);
+		CacheLibrary cache667 = new CacheLibrary("D:\\rs667-cache\\", true, null);
 		cache718.index(5).update();
 		System.out.println("Updated index 5");
 		int regionX = 49;

@@ -3,7 +3,10 @@
   "variants": [
     {
       "ids": [
+        87,
         2091,
+        4926,
+        4927,
         8829
       ],
       "members": false,
@@ -122,6 +125,69 @@
       "attackSpeedTicks": 4,
       "respawnTicks": 30,
       "slayerXp": 5,
+      "categories": [],
+      "assignedBy": [
+        "turael",
+        "spria"
+      ]
+    },
+    {
+      "ids": [
+        4395,
+        4944
+      ],
+      "members": false,
+      "combatLevel": 26,
+      "attackLevel": 22,
+      "strengthLevel": 23,
+      "defenceLevel": 22,
+      "magicLevel": 1,
+      "rangedLevel": 1,
+      "constitutionLevel": 25,
+      "attackBonus": 0,
+      "strengthBonus": 0,
+      "magicBonus": 0,
+      "magicStrengthBonus": 0,
+      "rangedBonus": 0,
+      "rangedStrengthBonus": 0,
+      "meleeDefence": {
+        "stab": 0,
+        "slash": 0,
+        "crush": 0
+      },
+      "magicDefence": {
+        "magic": 0
+      },
+      "rangedDefence": {
+        "light": 0,
+        "standard": 0,
+        "heavy": 0
+      },
+      "weaknesses": {},
+      "immunities": {
+        "poison": false,
+        "venom": false,
+        "cannons": false,
+        "thralls": false,
+        "burn": false
+      },
+      "aliases": [],
+      "size": "2",
+      "examine": "Overgrown vermin.",
+      "attributes": [
+        "rat"
+      ],
+      "xpBonus": 0.0,
+      "maxHit": {
+        "default": 3
+      },
+      "aggressive": true,
+      "attackStyles": [
+        "[[Stab]]"
+      ],
+      "attackSpeedTicks": 4,
+      "respawnTicks": 30,
+      "slayerXp": 25,
       "categories": [],
       "assignedBy": [
         "turael",

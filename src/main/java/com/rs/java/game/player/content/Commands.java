@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import com.rs.Settings;
+import com.rs.core.cache.Cache;
 import com.rs.core.cache.defintions.ClientScriptMap;
 import com.rs.core.cache.defintions.ItemDefinitions;
 import com.rs.core.cache.defintions.NPCDefinitions;
@@ -121,6 +122,8 @@ public final class Commands {
                 "Show your current risk.");
         registerCommand("testdrop", Commands::testDropCommand, CommandCategory.DEVELOPER,
                 "Test drop tables. Usage: ::testdrop [npcId] [times]");
+        registerCommand("debugobjects", Commands::DebugObjectsCommand, CommandCategory.DEVELOPER,
+                "debugobects. Usage: ::debugobjects");
         registerCommand("droptest", Commands::dropTestToggleCommand, CommandCategory.DEVELOPER,
                 "Toggle drop testing mode");
         registerCommand("dropamount", Commands::dropAmountCommand, CommandCategory.DEVELOPER,
@@ -268,6 +271,8 @@ public final class Commands {
                 "Permanently ban a player. Usage: ::permban [player]");
 
         // ================ MISSING DEVELOPER COMMANDS ================
+        registerCommand("mapfiles", Commands::mapFilesCommand, CommandCategory.DEVELOPER,
+                "Show map/landscape archive IDs for current region");
         registerCommand("search", Commands::searchCommand, CommandCategory.DEVELOPER,
                 "Search for items. Usage: ::search [item name]");
         registerCommand("sound", Commands::soundCommandDev, CommandCategory.DEVELOPER,
@@ -286,6 +291,8 @@ public final class Commands {
                 "Teleport all players to you");
         registerCommand("masterallskills", Commands::masterAllSkillsCommand, CommandCategory.DEVELOPER,
                 "Master all skills or specific skill. Usage: ::masterallskills [skillId]");
+        registerCommand("testshop", Commands::testCustomShopCommand, CommandCategory.DEVELOPER,
+                "Open the custom shop test (interface 3055)");
         registerCommand("heal", Commands::healCommand, CommandCategory.DEVELOPER,
                 "Fully heal yourself");
         registerCommand("healother", Commands::healOtherCommand, CommandCategory.DEVELOPER,
@@ -511,6 +518,7 @@ public final class Commands {
     private static void registerCommand(String name, Command command, CommandCategory category, String description) {
         COMMAND_REGISTRY.put(name.toLowerCase(), new CommandHandler(command, category, description));
     }
+
 
     /**
      * Main command processor
@@ -887,7 +895,37 @@ public final class Commands {
         return true;
     }
 
-    private static boolean giveItemCommand(Player player, String[] cmd) {
+    private static boolean DebugObjectsCommand(Player player, String[] cmd) {
+        Region r = World.getRegion(player.getRegionY() | (player.getRegionX() << 8));
+        if (r == null) {
+            player.message("Region is null!");
+            return true;
+        }
+        List<WorldObject> objects = r.getAllObjects();
+        if (objects == null) {
+            player.message("Objects are null!");
+            return true;
+        }
+        int count = 0;
+        for (WorldObject o : objects) {
+            if (o == null || !o.matches(player)) {
+                continue;
+            }
+            String msg = "[Object] id=" + o.getId() + ", type=" + o.getType() + ", rot=" + o.getRotation() + " @ " + o.getX() + "," + o.getY();
+            System.out.println(msg);
+            player.message(msg);
+            count++;
+        }
+        if (count == 0) {
+            player.message("No objects found.");
+        } else {
+            player.message("Found " + count + " object(s).");
+        }
+        return true;
+    }
+
+
+        private static boolean giveItemCommand(Player player, String[] cmd) {
         if (cmd.length < 3) {
             player.getPackets().sendGameMessage("Use: ::giveitem player id (optional:amount)");
             return true;
@@ -1122,6 +1160,20 @@ public final class Commands {
         } catch (NumberFormatException e) {
             player.getPackets().sendPanelBoxMessage("Use: ::emote id");
         }
+        return true;
+    }
+
+    private static boolean mapFilesCommand(Player player, String[] cmd) {
+        int regionId = player.getRegionId();
+        int regionX = (regionId >> 8) * 64;
+        int regionY = (regionId & 0xff) * 64;
+        String mapName = "m" + ((regionX >> 3) / 8) + "_" + ((regionY >> 3) / 8);
+        String landscapeName = "l" + ((regionX >> 3) / 8) + "_" + ((regionY >> 3) / 8);
+        int mapArchiveId = Cache.STORE.getIndexes()[5].getArchiveId(mapName);
+        int landscapeArchiveId = Cache.STORE.getIndexes()[5].getArchiveId(landscapeName);
+        System.out.println("landArchive: " + landscapeArchiveId + " (" + landscapeName + ")");
+        System.out.println("mapArchive: " + mapArchiveId + " (" + mapName + ")");
+        player.message("Region: " + regionId + " | Map: " + mapName + " (id:" + mapArchiveId + ") | Landscape: " + landscapeName + " (id:" + landscapeArchiveId + ")");
         return true;
     }
 
@@ -1943,6 +1995,35 @@ public final class Commands {
             }
         }
         player.message("Teleported all players to you.");
+        return true;
+    }
+
+    private static boolean testCustomShopCommand(Player player, String[] cmd) {
+        new CustomShop("Donator Shop", 995, new Item[]{
+                // Melee
+                new Item(4151, 100),   // abyssal whip
+                new Item(4587, 50),    // dragon scimitar
+                new Item(1305, 50),    // dragon longsword
+                new Item(1215, 50),    // dragon dagger
+                // Armour
+                new Item(11832, 50),   // bandos chestplate
+                new Item(11834, 50),   // bandos tassets
+                new Item(11838, 50),   // bandos boots
+                new Item(11840, 50),   // bandos gloves
+                // Ranged
+                new Item(13347, 10),   // armadyl chestplate
+                new Item(13349, 10),   // armadyl chainskirt
+                new Item(13351, 10),   // armadyl helmet
+                // Magic
+                new Item(3751, 10),    // ahrim's robetop
+                new Item(3753, 10),    // ahrim's robeskirt
+                new Item(3749, 10),    // ahrim's hood
+                // Misc
+                new Item(6570, 5),     // fire cape
+                new Item(11663, 5),    // berserker ring
+                new Item(11665, 5),    // archers ring
+                new Item(11667, 5),    // seers ring
+        }).open(player);
         return true;
     }
 
