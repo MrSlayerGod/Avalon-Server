@@ -4,3 +4,22 @@
 /.gradle
 /.idea
 /gradle
+
+/data
+# Item param dumps
+/item_param_dumps/
+
+# Map packed spawns
+/data/map/packedSpawns/
+
+# NPC wiki data
+/data/npcs/wikidata/
+
+# Character saves
+/data/characters/
+
+# CS2 script dumps
+/dump/
+
+# Compiled class files
+*.class
