@@ -5,6 +5,7 @@
     <bytecodeTargetLevel target="21" />
   </component>
   <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_STRING" value="-Xlint:deprecation" />
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="727-source" options="-Xlint:deprecation" />
       <module name="727-source.main" options="-Xlint:deprecation" />

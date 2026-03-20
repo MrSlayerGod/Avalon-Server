@@ -21,6 +21,7 @@ import com.rs.java.game.map.MapBuilder;
 import com.rs.java.game.npc.NpcPluginLoader;
 import com.rs.java.game.npc.combat.CombatScriptsHandler;
 import com.rs.java.game.player.content.collectionlog.CollectionLog;
+import com.rs.java.game.player.content.shops.CustomShopHandler;
 import com.rs.json.JsonNpcCombatDefinitions;
 import com.rs.kotlin.rscm.Rscm;
 import com.rs.kotlin.rscm.RscmGenerator;

@@ -158,7 +158,7 @@ public class Region {
 		ObjectDefinitions objectDefinition = ObjectDefinitions.getObjectDefinitions(object.getId()); // load
 		// here
 
-		if (type == 22 ? objectDefinition.getClipType() != 1 : objectDefinition.getClipType() == 0)
+if (type == 22 ? objectDefinition.getClipType() != 1 : objectDefinition.getClipType() == 0)
 			return;
 		if (type >= 0 && type <= 3) {
 			if (!objectDefinition.ignoreClipOnAlternativeRoute) // disabled those walls for now since theyre guard
@@ -526,12 +526,15 @@ public class Region {
 	public void loadRegionMap() {
 		int regionX = (regionId >> 8) * 64;
 		int regionY = (regionId & 0xff) * 64;
-		int landArchiveId = Cache.STORE.getIndexes()[5]
-				.getArchiveId("l" + ((regionX >> 3) / 8) + "_" + ((regionY >> 3) / 8));
+		boolean is639Region = Settings.is639Map(regionId);
+		String landName = "l" + ((regionX >> 3) / 8) + "_" + ((regionY >> 3) / 8);
+		String mapName  = "m" + ((regionX >> 3) / 8) + "_" + ((regionY >> 3) / 8);
+		int landArchiveId = Cache.STORE.getIndexes()[5].getArchiveId(landName);
+		// 639 regions: land file was packed unencrypted by Pack639Data, use null keys
 		byte[] landContainerData = landArchiveId == -1 ? null
-				: Cache.STORE.getIndexes()[5].getFile(landArchiveId, 0, MapArchiveKeys.getMapKeys(regionId));
+				: Cache.STORE.getIndexes()[5].getFile(landArchiveId, 0, is639Region ? null : MapArchiveKeys.getMapKeys(regionId));
 		int mapArchiveId = Cache.STORE.getIndexes()[5]
-				.getArchiveId("m" + ((regionX >> 3) / 8) + "_" + ((regionY >> 3) / 8));
+				.getArchiveId(mapName);
 		byte[] mapContainerData = mapArchiveId == -1 ? null : Cache.STORE.getIndexes()[5].getFile(mapArchiveId, 0);
 		byte[][][] mapSettings = mapContainerData == null ? null : new byte[4][64][64];
 		if (mapContainerData != null) {
@@ -601,13 +604,15 @@ public class Region {
 						objectPlane--;
 					if (objectPlane < 0 || objectPlane >= 4 || plane < 0 || plane >= 4)
 						continue;
+					int spawnId = is639Region ? objectId + Settings._639_OBJECTS_OFFSET : objectId;
 					spawnObject(
-							new WorldObject(objectId, type, rotation, localX + regionX, localY + regionY, objectPlane),
+							new WorldObject(spawnId, type, rotation, localX + regionX, localY + regionY, objectPlane),
 							objectPlane, localX, localY, true);
 				}
 			}
 		}
-		if (Settings.DEBUG && landContainerData == null && landArchiveId != -1
+		if (!is639Region && Settings.DEBUG && landContainerData == null
+				&& Cache.STORE.getIndexes()[5].getArchiveId(landName) != -1
 				&& MapArchiveKeys.getMapKeys(regionId) != null)
 			Logger.log(this, "Missing xteas for region " + regionId + ".");
 	}

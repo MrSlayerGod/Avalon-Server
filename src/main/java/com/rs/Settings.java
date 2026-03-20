@@ -54,8 +54,27 @@ public final class Settings {
 	public static final String CACHE_PATH = System.getProperty("user.dir") + "/data/cache/";
 	public static final int RECEIVE_DATA_LIMIT = 7500;
 	public static final int PACKET_SIZE_LIMIT = 7500;
-	public static final int CLIENT_BUILD = 718;
+	public static final int CLIENT_BUILD = 727;
 	public static final int CUSTOM_CLIENT_BUILD = 1;
+
+
+	//639 cache info
+	public static final String _639_CACHE_PATH = "C:\\Users\\deane\\Documents\\Github\\void\\data\\cache\\";
+	public static int _639_MODEL_OFFSET = 300_000;
+	public static int _639_OBJECTS_OFFSET = 100_000;
+	public static int[] _639_MAP_IDS = {
+		12598 // Grand Exchange
+	};
+
+	public static boolean is639Map(int regionId) {
+		for (int id : _639_MAP_IDS)
+			if (id == regionId)
+				return true;
+		return false;
+	}
+
+
+
 
 	/**
 	 * PkP Settings
